@@ -180,6 +180,14 @@ config MACH_MSM7X27_SURF
 	help
 	  Support for the Qualcomm MSM7x27 SURF eval board.
 
+config MACH_MSM7X27_SWIFT
+  depends on ARCH_MSM7X27
+  depends on !MSM_STACKED_MEMORY
+  default y
+  bool "MSM7x27 SWIFT"
+  help
+    Support for the Qualcomm MSM7x27 SWIFT LG GT540 (Optimus).
+
 config MACH_MSM7X27_FFA
 	depends on ARCH_MSM7X27
 	depends on !MSM_STACKED_MEMORY
@@ -394,6 +402,7 @@ config PHYS_OFFSET
 	hex
 	#LGE_CHANGE, for 4G DDR support
 	default "0x12800000" if MACH_MSM7X27_THUNDERG
+	default "0x00200000" if MACH_MSM7X27_SWIFT
 	default "0x12200000" if MACH_MSM7X27_THUNDERC
 	default "0x12800000" if MACH_MSM7X27_THUNDERA
 	default "0x12800000" if MACH_MSM7X27_GELATO
