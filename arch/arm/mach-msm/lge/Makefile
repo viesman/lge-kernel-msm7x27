@@ -29,6 +29,16 @@ obj-$(CONFIG_MACH_MSM7X27_THUNDERG) += board-thunderg-input.o
 obj-$(CONFIG_MACH_MSM7X27_THUNDERG) += board-thunderg-misc.o
 obj-$(CONFIG_MACH_MSM7X27_THUNDERG) += board-thunderg-pm.o
 
+obj-$(CONFIG_MACH_MSM7X27_SWIFT) += board-swift.o
+obj-$(CONFIG_MACH_MSM7X27_SWIFT) += board-swift-mmc.o
+obj-$(CONFIG_MACH_MSM7X27_SWIFT) += board-swift-snd.o
+obj-$(CONFIG_MACH_MSM7X27_SWIFT) += board-swift-panel.o
+obj-$(CONFIG_MACH_MSM7X27_SWIFT) += board-swift-bt.o
+obj-$(CONFIG_MACH_MSM7X27_SWIFT) += board-swift-camera.o
+obj-$(CONFIG_MACH_MSM7X27_SWIFT) += board-swift-input.o
+obj-$(CONFIG_MACH_MSM7X27_SWIFT) += board-swift-misc.o
+obj-$(CONFIG_MACH_MSM7X27_SWIFT) += board-swift-pm.o
+
 obj-$(CONFIG_MACH_MSM7X27_GELATO) += board-gelato.o
 obj-$(CONFIG_MACH_MSM7X27_GELATO) += board-gelato-mmc.o
 obj-$(CONFIG_MACH_MSM7X27_GELATO) += board-gelato-snd.o

@@ -5,6 +5,14 @@ menu "LGE Device-Specific Changes"
 
 menu "LGE Board Selection"
 
+config MACH_MSM7X27_SWIFT
+  depends on ARCH_MSM7X27
+  depends on !MSM_STACKED_MEMORY
+  select MACH_LGE
+  bool "MSM7x27 SWIFT"
+  help
+    Support for the Qualcomm MSM7x27 SWIFT LG GT540 (Optimus).
+
 config MACH_MSM7X27_THUNDERG
 	depends on ARCH_MSM7X27
 	depends on !MSM_STACKED_MEMORY
