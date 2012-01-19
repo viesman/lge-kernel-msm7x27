@@ -51,7 +51,11 @@ obj-$(CONFIG_FB_MSM_EBI2) += ebi2_lcd.o
 obj-$(CONFIG_FB_MSM_LCDC) += lcdc.o
 
 # MDDI
+ifeq ($(CONFIG_MACH_MSM7X27_SWIFT),y)
+msm_mddi-objs := mddi.o mddihost_eve.o mddihosti.o
+else
 msm_mddi-objs := mddi.o mddihost.o mddihosti.o
+endif
 obj-$(CONFIG_FB_MSM_MDDI) += msm_mddi.o
 
 # External MDDI
@@ -88,6 +92,7 @@ obj-y += mddi_sharp.o
 obj-y += mddi_orise.o
 obj-y += mddi_quickvx.o
 obj-y += mddi_hitachi_hvga.o
+obj-y += mddi_swift.o mddi_swift_panel.o
 
 # LGE_DEV_PORTING UNIVA_S [ks82.jung@lge.com]
 obj-y += mddi_ldp_hvga.o
@@ -104,6 +109,7 @@ obj-$(CONFIG_FB_MSM_MDDI_SHARP_QVGA_128x128) += mddi_sharp.o
 obj-$(CONFIG_FB_MSM_MDDI_ORISE) += mddi_orise.o
 obj-$(CONFIG_FB_MSM_MDDI_QUICKVX) += mddi_quickvx.o
 obj-$(CONFIG_FB_MSM_MDDI_HITACHI_HVGA) += mddi_hitachi_hvga.o
+obj-$(CONFIG_FB_MSM_MDDI_SWIFT) += mddi_swift.o mddi_swift_panel.o
 
 # LGE_DEV_PORTING UNIVA_S [ks82.jung@lge.com]
 obj-$(CONFIG_FB_MSM_MDDI_LDP_HVGA) += mddi_ldp_hvga.o
