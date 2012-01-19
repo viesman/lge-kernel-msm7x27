@@ -311,6 +311,13 @@ endif # BACKLIGHT_CLASS_DEVICE
 
 endif # BACKLIGHT_LCD_SUPPORT
 
+config BACKLIGHT_RT9393
+	tristate "RT9393 Backlight Driver "
+	depends on BACKLIGHT_CLASS_DEVICE
+	default n
+	help
+	  If you have a RT9393, say y to enable the backlight driver
+
 config BACKLIGHT_AAT2870
 	tristate "AAT2870 Backlight Driver "
 	depends on BACKLIGHT_CLASS_DEVICE
