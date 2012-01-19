@@ -34,7 +34,7 @@
 /* sdcard related macros */
 #ifdef CONFIG_MMC_MSM_CARD_HW_DETECTION
 #define GPIO_SD_DETECT_N	49
-#define GPIO_MMC_COVER_DETECT 77
+#define GPIO_MMC_COVER_DETECT 19
 #define VREG_SD_LEVEL       3000
 
 #define GPIO_SD_DATA_3      51
@@ -70,34 +70,26 @@
 #define LDO_CAM_DVDD_NO		3	/* 1.2V */
 #define LDO_CAM_IOVDD_NO	4	/* 2.6V */
 
-/* proximity sensor */
-#define PROXI_GPIO_I2C_SCL	107
-#define PROXI_GPIO_I2C_SDA 	108
-#define PROXI_GPIO_DOUT		109
-#define PROXI_I2C_ADDRESS	0x44 /*slave address 7bit*/
-#define PROXI_LDO_NO_VCC	1
-
 /* accelerometer */
-#define ACCEL_GPIO_INT	 		39
-#define ACCEL_GPIO_I2C_SCL  	2
-#define ACCEL_GPIO_I2C_SDA  	3
-#define ACCEL_I2C_ADDRESS		0x08 /*KR3DM slave address 7bit*/
-#define ACCEL_I2C_ADDRESS_H		0x18 /*KR3DH slave address 7bit*/
+#define ACCEL_GPIO_INT	 	33
+#define ACCEL_GPIO_I2C_SCL  	40
+#define ACCEL_GPIO_I2C_SDA  	41
+#define ACCEL_I2C_ADDRESS	0x38
 
 /*Ecompass*/
-#define ECOM_GPIO_I2C_SCL		107
-#define ECOM_GPIO_I2C_SDA		108
-#define ECOM_GPIO_RST
-#define ECOM_GPIO_INT		31
-#define ECOM_I2C_ADDRESS		0x0F /* slave address 7bit */
+#define ECOM_GPIO_INT		18
+#define ECOM_GPIO_I2C_SCL	30
+#define ECOM_GPIO_I2C_SDA	31
+#define ECOM_GPIO_RST		23
+#define ECOM_I2C_ADDRESS	0x1C
 
 /* lcd & backlight */
-#define GPIO_LCD_BL_EN		82
+#define GPIO_LCD_BL_EN		84
 #define GPIO_BL_I2C_SCL		88
 #define GPIO_BL_I2C_SDA		89
 #define GPIO_LCD_VSYNC_O	97
-#define GPIO_LCD_MAKER_LOW	101
-#define GPIO_LCD_RESET_N	102
+#define GPIO_LCD_MAKER_LOW	102
+#define GPIO_LCD_RESET_N	101
 
 #define BL_POWER_SUSPEND 0
 #define BL_POWER_RESUME  1
@@ -132,11 +124,11 @@ extern struct i2c_board_info i2c_devices[1];
 extern int camera_power_state;
 extern int lcd_bl_power_state;
 /* interface functions */
-int config_camera_on_gpios(void);
+void config_camera_on_gpios(void);
 void config_camera_off_gpios(void);
 void camera_power_mutex_lock(void);
 void camera_power_mutex_unlock(void);
 void thunderg_pwrsink_resume(void);
 
-struct device* thunderg_backlight_dev(void);
+
 #endif

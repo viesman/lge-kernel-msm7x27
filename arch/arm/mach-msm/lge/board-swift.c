@@ -71,6 +71,9 @@
 #include <mach/board_lge.h>
 #include "board-swift.h"
 
+//void map_zero_page_strongly_ordered(void);
+void __init swift_init_timed_vibrator(void);
+
 /* board-specific pm tuning data definitions */
 
 /* currently, below declaration code is blocked.
@@ -402,6 +405,9 @@ struct android_usb_platform_data android_usb_pdata = {
 
 #endif /* CONFIG_USB_ANDROID */
 
+static struct platform_device swift_keyled = {
+	.name = "swift-led",
+};
 static struct platform_device *devices[] __initdata = {
 	&msm_device_smd,
 	&msm_device_dmov,
@@ -410,6 +416,7 @@ static struct platform_device *devices[] __initdata = {
 	&msm_device_uart_dm1,
 	&msm_device_snd,
 	&msm_device_adspdec,
+	&swift_keyled,
 };
 
 extern struct sys_timer msm_timer;
@@ -507,6 +514,7 @@ static void __init msm7x2x_init(void)
 
 	/* gpio i2c devices should be registered at latest point */
 	lge_add_gpio_i2c_devices();
+	swift_init_timed_vibrator();
 }
 
 static void __init msm7x2x_map_io(void)
@@ -524,7 +532,7 @@ static void __init msm7x2x_map_io(void)
 #endif
 }
 
-MACHINE_START(MSM7X27_SWIFT, "QCT MSM7x27 SWIFT")
+MACHINE_START(MSM7X27_SWIFT, "MSM7x27 SWIFT")
 #ifdef CONFIG_MSM_DEBUG_UART
   .phys_io        = MSM_DEBUG_UART_PHYS,
   .io_pg_offst    = ((MSM_DEBUG_UART_BASE) >> 18) & 0xfffc,

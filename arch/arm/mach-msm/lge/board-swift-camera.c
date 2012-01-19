@@ -1,4 +1,4 @@
-/* arch/arm/mach-msm/board-swift-camera.c
+/* arch/arm/mach-msm/lge/board-swift-camera.c
  * Copyright (C) 2009 LGE, Inc.
  *
  * This software is licensed under the terms of the GNU General Public
@@ -93,7 +93,7 @@ static void config_gpio_table(uint32_t *table, int len)
 	}
 }
 
-int config_camera_on_gpios(void)
+void config_camera_on_gpios(void)
 {
 	config_gpio_table(camera_on_gpio_table,
 		ARRAY_SIZE(camera_on_gpio_table));
