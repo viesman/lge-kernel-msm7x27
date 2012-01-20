@@ -77,7 +77,7 @@
 #define BATTERY_CB_ID_LOW_VOL		2
 
 #ifdef CONFIG_MACH_MSM7X27_SWIFT
-define BATTERY_LOW		3200
+#define BATTERY_LOW		3200
 #else
 #define BATTERY_LOW		3600	//3400	//3200//2800
 #endif

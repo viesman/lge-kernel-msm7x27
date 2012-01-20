@@ -16,13 +16,10 @@
 #include <linux/gpio.h>
 #include <linux/platform_device.h>
 #include <linux/delay.h>
-
 #include <mach/vreg.h>
-
 #include <linux/backlight.h>
-
-#include "msm_fb.h"
-#include "mddihosti.h"
+#include "../../../../drivers/video/msm/msm_fb.h"
+#include "../../../../drivers/video/msm/mddihosti.h"
 
 #define TM_GET_DID(id)	((id) & 0xff)
 #define TM_GET_PID(id)	(((id) & 0xff00)>>8)
@@ -163,7 +160,7 @@ static void display_table(struct display_table *table, unsigned int count)
 		//case REGFLAG_END_OF_TABLE :
 			//break;
 		default:
-			mddi_host_register_cmd_write(reg, table[i].count, table[i].val_list,
+			mddi_host_register_cmds_write8(reg, table[i].count, table[i].val_list,
 					0, 0, 0);
 #if SWIFT_DEBUG_LCD
 		       printk(KERN_INFO, "reg : %x, val : 0x%X.\n",

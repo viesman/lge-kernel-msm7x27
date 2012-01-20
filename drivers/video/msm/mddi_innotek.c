@@ -56,7 +56,6 @@
  */
 
 #include "msm_fb.h"
-//#include "../../../../drivers/video/msm/mddihost_eve.h"
 #include "mddihosti.h"
 #include "mddi_toshiba.h"
 
