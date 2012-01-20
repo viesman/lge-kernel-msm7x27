@@ -80,9 +80,17 @@
 
 #define DEBUG	0
 
+#ifdef CONFIG_MACH_MSM7X27_SWIFT
+#if 0
 static unsigned short normal_i2c[] = { I2C_CLIENT_END };
 
 I2C_CLIENT_INSMOD;
+#endif
+#else
+static unsigned short normal_i2c[] = { I2C_CLIENT_END };
+
+I2C_CLIENT_INSMOD;
+#endif
 
 static struct i2c_client *bma150_client = NULL;
 
@@ -1036,7 +1044,9 @@ static int bma150_detect(struct i2c_client *client, int kind,
 
 static int bma150_remove(struct i2c_client *client)
 {
-	/* int err; */
+#ifdef CONFIG_MACH_MSM7X27_SWIFT
+	int err;
+#endif
 	struct bma150_data *bma = i2c_get_clientdata(client);
 #if DEBUG
 	printk(KERN_INFO "BMA150 driver: remove\n");
@@ -1056,6 +1066,9 @@ static int bma150_remove(struct i2c_client *client)
 #ifdef CONFIG_PM
 static int bma150_suspend(struct i2c_client *client, pm_message_t state)
 {
+#ifdef CONFIG_MACH_MSM7X27_SWIFT
+struct bma150_device *dev = i2c_get_clientdata(client);
+#endif
 	int ret;
 	u8 v;
 #if DEBUG
@@ -1083,6 +1096,9 @@ static int bma150_suspend(struct i2c_client *client, pm_message_t state)
 
 static int bma150_resume(struct i2c_client *client)
 {
+#ifdef CONFIG_MACH_MSM7X27_SWIFT
+struct bma150_device *dev = i2c_get_clientdata(client);
+#endif
 	int ret;
 	u8 v;
 #if DEBUG 
@@ -1122,8 +1138,18 @@ static struct i2c_driver bma150_driver = {
 		.name	= "acceleration",
 	},
 	.detect	= bma150_detect,
+#ifdef CONFIG_MACH_MSM7X27_SWIFT
+#if 0
         .address_data = &addr_data,
+#endif
+#else
+        .address_data = &addr_data,
+#endif
 };
+
+#ifdef CONFIG_MACH_MSM7X27_SWIFT
+MODULE_DEVICE_TABLE(i2c,bma150_id);
+#endif
 
 static int __init bma150_init(void)
 {

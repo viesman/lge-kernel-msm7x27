@@ -43,9 +43,17 @@
 #define ADBG(fmt, args...) do {} while (0)
 #endif /* AKMD_DEBUG */
 
+#ifdef CONFIG_MACH_MSM7X27_SWIFT
+#if 0
 static unsigned short normal_i2c[] = { I2C_CLIENT_END };
 
 I2C_CLIENT_INSMOD;
+#endif
+#else
+static unsigned short normal_i2c[] = { I2C_CLIENT_END };
+
+I2C_CLIENT_INSMOD;
+#endif
 
 static struct i2c_client *this_client;
 
@@ -1050,8 +1058,18 @@ static struct i2c_driver akm8973_driver = {
 		   .name = "akm8973",
 		   },
 	.detect = akm8973_detect,
-	.address_data = &addr_data,
+#ifdef CONFIG_MACH_MSM7X27_SWIFT
+#if 0
+        .address_data = &addr_data,
+#endif
+#else
+        .address_data = &addr_data,
+#endif
 };
+
+#ifdef CONFIG_MACH_MSM7X27_SWIFT
+MODULE_DEVICE_TABLE(i2c, akm8973_id);
+#endif
 
 static int __init akm8973_init(void)
 {
