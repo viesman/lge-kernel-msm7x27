@@ -31,8 +31,7 @@
 #include <asm/uaccess.h>
 #include <linux/ioctl.h>
 #include <linux/miscdevice.h>
-
-#define SWIFT_DEBUG_TS 0
+#include "../../../arch/arm/mach-msm/proc_comm.h"
 
 /* HW register map */
 #define TSSC_CTL_REG      0x100
@@ -73,11 +72,7 @@
 #define TSSC_NUMBER_OF_OPERATIONS 2
 #define TSSC_SI_STATE 8     
 
-#if defined(CONFIG_MACH_MSM7X27_SWIFT)
 #define TS_PENUP_TIMEOUT_MS 15 /* 100 */
-#else	/* by qualcomm */
-#define TS_PENUP_TIMEOUT_MS 20
-#endif
 
 #define TS_DRIVER_NAME "swift_touchscreen"
 
@@ -94,7 +89,7 @@
 #define P_MAX	256
 
 static int PreRejectTouchCount = 0;
-static  int preRejectValue = 2;
+static int preRejectValue = 2;
 
 static uint32_t msm_tsdebug;
 module_param_named(debug_mask, msm_tsdebug, uint, 0664);
@@ -113,12 +108,9 @@ struct ts {
 	u8 keypad;
 };
 
-
-struct  ts *base_ts =0;
-
 static int TouchWindowPress = 1; 
-//extern int ts_key_event;
 int ts_key_event;
+
 static void __iomem *virt;
 #define TSSC_REG(reg) (virt + TSSC_##reg##_REG)
 
@@ -130,26 +122,6 @@ static int back_y = TS_KEY_Y;
 #if defined(TS_KEY_CALMODE)
 
 #define TOUCH_KEY_FILENAME "/data/nv/tskey_cal"
-
-int swift_hs_press()
-	/*headset event*/
-	      {
-		if (base_ts)
-		  {
-		    //if (base_ts->keypad == 0) {
-#if SWIFT_DEBUG_TS
-			  printk("input report HS key\n");
-#endif
-			  input_report_key(base_ts->input, KEY_HOME, 1);
-			  //  base_ts->keypad = KEY_HOME;
-			  	/* kick pen up timer - to make sure it expires again(!) */
-			  // mod_timer(&base_ts->timer,  msecs_to_jiffies(15));
-			 input_report_key(base_ts->input, KEY_HOME, 0);
-
-			 //	}
-		  }
-	      }
-EXPORT_SYMBOL(swift_hs_press);
 
 int ts_calibration_for_touch_key_region(char *filename, int *cal_data)
 {
@@ -243,6 +215,7 @@ err_close_file:
 #define TOUCH_CAL_SET_DATA   	   _IOWR(TOUCH_CAL_IOC_MAGIC, 0x01, int[8])
 #define TOUCH_CAL_TOUCH_KEY_MODE   _IOWR(TOUCH_CAL_IOC_MAGIC, 0x02, int)
 
+#define TOUCH_CAL_GET_DATA   	   _IOWR(TOUCH_CAL_IOC_MAGIC, 0x03, int[8])
 static int touch_cal_open(struct inode *inode, struct file *file)
 {	   
 	 int status = 0;
@@ -256,18 +229,81 @@ static int touch_cal_release(struct inode *inode, struct file *file)
 	 printk("touch_release\n"); 	 
 	 return 0;
 }
+void apply_cal_data(int *cal_data)
+{
+	int x1 = 0, y1 = 0, x2 = 0, y2 = 0, x3 = 0, y3 = 0, x4 = 0, y4 = 0;
 
+	if (cal_data[0]) {
+		x1 = (cal_data[0] * (X_MAX - X_MIN) / 320) + X_MIN;
+	}
+	
+	if (cal_data[1]) {
+		y1 = ((cal_data[1] + 20) * (Y_MAX - Y_MIN) / 450) + Y_MIN;
+	}
+	
+	if (cal_data[2]) {
+		x2 = (cal_data[2] * (X_MAX - X_MIN) / 320) + X_MIN;
+	}
+	
+	if (cal_data[3]) {
+		y2 = (cal_data[3] * (Y_MAX - Y_MIN) / 450) + Y_MIN;
+	}
+	
+	if (cal_data[4]) {
+		x3 = (cal_data[4] * (X_MAX - X_MIN) / 320) + X_MIN;
+	}
+	
+	if (cal_data[5]) {
+		y3 = (cal_data[5] * (Y_MAX - Y_MIN) / 450) + Y_MIN;
+	}
+	
+	if (cal_data[6]) {
+		x4 = (cal_data[6] * (X_MAX - X_MIN) / 320) + X_MIN;
+	}
+	
+	if (cal_data[7]) {
+		y4 = ((cal_data[7] + 20 )* (Y_MAX - Y_MIN) / 450) + Y_MIN;
+	}
+	
+	menu_x = x1 - ((x4 - x1) * 100 / 541);
+	menu_y = y2 + ((y2 - y1) * 100 / 841); /* 567 */
+	back_x = x4 + ((x4 - x1) * 100 / 541);
+	back_y = y3 + ((y3 - y4) * 100 / 841); /* 567 */
+	
+	if (!menu_x || !menu_y || !back_x || !back_y) {
+		menu_x = MENU_KEY_X;
+		menu_y = TS_KEY_Y; 
+		back_x = BACK_KEY_X;
+		back_y = TS_KEY_Y; 
+	}
+	
+	printk("[SWIFT TOUCH CAL] X1:%d, Y1:%d\n", x1, y1);  
+	printk("[SWIFT TOUCH CAL] X2:%d, Y2:%d\n", x2, y2);  
+	printk("[SWIFT TOUCH CAL] X3:%d, Y3:%d\n", x3, y3);  
+	printk("[SWIFT TOUCH CAL] X4:%d, Y4:%d\n", x4, y4);  
+	printk("[SWIFT TOUCH CAL] MENU X:%d, MENU Y:%d\n", menu_x, menu_y);  
+	printk("[SWIFT TOUCH CAL] BACK X:%d, BACk Y:%d\n", back_x, back_y); 
+
+}
 static int touch_cal_ioctl(struct inode *inode, struct file *file, unsigned int cmd,unsigned long arg)
 {
 	void __user *argp = (void __user *)arg;
 	int cal_data[8] = {0,};
 	int current_cal_mode = 0;
-	int i;
-	int x1 = 0, y1 = 0, x2 = 0, y2 = 0, x3 = 0, y3 = 0, x4 = 0, y4 = 0;
+	int i, idx;
 
 	printk("[touch_cal_ioctl]cmd[%d]\n", cmd); 
 
 	switch (cmd) {
+	case TOUCH_CAL_GET_DATA:
+		for(i=0 ; i < 8 ; i++)
+		{
+			idx = i;
+			msm_proc_comm(PCOM_OEM_GET_TOUCH_CAL, &cal_data[i], &idx);		
+			printk("### get cal_data[%d]:%d\n", i, cal_data[i]); 			
+		}
+		apply_cal_data(cal_data);
+		break;
 	case TOUCH_CAL_SET_DATA:
 
 		printk("[touch_cal_ioctl]TOUCH_CAL_SET_DATA\n"); 
@@ -281,58 +317,14 @@ static int touch_cal_ioctl(struct inode *inode, struct file *file, unsigned int 
 		*/
 
 		for(i=0 ; i < 8 ; i++)
-			printk("[SWIFT TOUCH CAL](%d) cal_data:%d\n", i, cal_data[i]);  
-
-		if (cal_data[0]) {
-			x1 = (cal_data[0] * (X_MAX - X_MIN) / 320) + X_MIN;
+		{
+			idx = i;
+			msm_proc_comm(PCOM_OEM_SET_TOUCH_CAL, &cal_data[i], &idx);		
+			
+			printk("[SWIFT TOUCH CAL](%d) cal_data:%d\n", i, idx); 
 		}
 
-		if (cal_data[1]) {
-			y1 = ((cal_data[1] + 20) * (Y_MAX - Y_MIN) / 450) + Y_MIN;
-		}
-
-		if (cal_data[2]) {
-			x2 = (cal_data[2] * (X_MAX - X_MIN) / 320) + X_MIN;
-		}
-
-		if (cal_data[3]) {
-			y2 = (cal_data[3] * (Y_MAX - Y_MIN) / 450) + Y_MIN;
-		}
-
-		if (cal_data[4]) {
-			x3 = (cal_data[4] * (X_MAX - X_MIN) / 320) + X_MIN;
-		}
-
-		if (cal_data[5]) {
-			y3 = (cal_data[5] * (Y_MAX - Y_MIN) / 450) + Y_MIN;
-		}
-
-		if (cal_data[6]) {
-			x4 = (cal_data[6] * (X_MAX - X_MIN) / 320) + X_MIN;
-		}
-
-		if (cal_data[7]) {
-			y4 = ((cal_data[7] + 20 )* (Y_MAX - Y_MIN) / 450) + Y_MIN;
-		}
-
-		menu_x = x1 - ((x4 - x1) * 100 / 541);
-		menu_y = y2 + ((y2 - y1) * 100 / 841); /* 567 */
-		back_x = x4 + ((x4 - x1) * 100 / 541);
-		back_y = y3 + ((y3 - y4) * 100 / 841); /* 567 */
-	
-		if (!menu_x || !menu_y || !back_x || !back_y) {
-			menu_x = MENU_KEY_X;
-			menu_y = TS_KEY_Y; 
-			back_x = BACK_KEY_X;
-			back_y = TS_KEY_Y; 
-		}
-
-		printk("[SWIFT TOUCH CAL] X1:%d, Y1:%d\n", x1, y1);  
-		printk("[SWIFT TOUCH CAL] X2:%d, Y2:%d\n", x2, y2);  
-		printk("[SWIFT TOUCH CAL] X3:%d, Y3:%d\n", x3, y3);  
-		printk("[SWIFT TOUCH CAL] X4:%d, Y4:%d\n", x4, y4);  
-		printk("[SWIFT TOUCH CAL] MENU X:%d, MENU Y:%d\n", menu_x, menu_y);  
-		printk("[SWIFT TOUCH CAL] BACK X:%d, BACk Y:%d\n", back_x, back_y);  
+		apply_cal_data(cal_data);
 
 		break;
 	}
@@ -423,38 +415,24 @@ static void ts_timer(unsigned long arg)
 	struct ts *ts = (struct ts *)arg;
 
 	ts->count = 0;
-	if (ts->keypad == KEY_HOME) {
-		input_report_key(ts->input, KEY_HOME, 0);
-		ts->keypad = 0;
-		return;
-	}
-
-
-//#if defined(CONFIG_MACH_MSM7X27_SWIFT)
 	input_report_abs(ts->input, ABS_PRESSURE, 0);
 	input_report_key(ts->input, BTN_TOUCH, 0);
     input_sync(ts->input);
 
 	TouchWindowPress = 0;
 	PreRejectTouchCount =0; 
-//#if defined(CONFIG_MACH_MSM7X27_SWIFT_REV_1)
-	if (ts->keypad == KEY_MENU) {
-		input_report_key(ts->input, KEY_MENU, 0);
+
+	if (ts->keypad == KEY_HOME) {
+		input_report_key(ts->input, KEY_HOME, 0);
 		ts->keypad = 0;
 	}
-//#else
-/*head set */
 
-//#endif
 	if (ts->keypad == KEY_BACK) {
 		input_report_key(ts->input, KEY_BACK, 0);
 		ts->keypad = 0;
 		ts_key_event = 0;
 	}
 
-//#else /* by qualcomm */
-//	ts_update_pen_state(ts, 0, 0, 0);
-//#endif
 }
 
 static irqreturn_t ts_interrupt(int irq, void *dev_id)
@@ -502,83 +480,29 @@ static irqreturn_t ts_interrupt(int irq, void *dev_id)
 		x_prime = y;
 		y_prime = x;
 
-//#if defined(CONFIG_MACH_MSM7X27_SWIFT)
 		lx = x_prime;
 		ly = 3300 - y_prime;  /* 10bit : 827  12bit : 3300 */
-//#else
-//#ifdef CONFIG_ANDROID_TOUCHSCREEN_MSM_HACKS
-//		lx = ts->x_max + 25 - x;
-//		ly = ts->y_max + 25 - y;
-//		if (machine_is_msm7201a_surf()) {
-//			if (lx > 435) {
-//				/* Max out x for points lying outside hvga display */
-//				lx = X_MAX;
-//			} else {
-//				/* Scale x for hvga display */
-//				if (lx < 250)
-//					lx = lx * 2 - 55;
-//				else if (lx > 250 && lx < 260)
-//					lx = lx * 2;
-//				else
-//					lx = lx * 2 + 70;
-//			}
-//		} else {
-//			/* manipulate x,y co-ordinates for ffa */
-//			if (lx > 700 || ly > 820) {
-//				/* Max out x for points lying outside hvga display */
-//				lx = X_MAX;
-//				ly = Y_MAX;
-//			} else {
-//				if (ly < 700 && ly > 280) {
-//					lx = lx * 2 - 250 ;
-//					ly = ly  + 160;
-//				} else if (lx > 530)
-//					lx = lx * 2 + 30;
-//				else if (ly < 280)
-//					ly = ly - 50;
-//				else
-//					ly = ly + 250;
-//			}
-//		}
-//#else
-//		lx = x;
-//		ly = y;
-//#endif
-//#endif
 
 		if (msm_tsdebug & 1)
 			printk("++++++++x=%d, y=%d++++++++\n", lx, ly);
 
 		if ((lx  <  menu_x) && (ly > menu_y)) {
-//#if defined(CONFIG_MACH_MSM7X27_SWIFT_REV_1)
+
 			if (msm_tsdebug & 1)
-				printk("Menu key : x=%d, y=%d\n", lx, ly);
+				printk("Home key : x=%d, y=%d\n", lx, ly);
 			
 			if (ts->keypad == 0) {
-#if SWIFT_DEBUG_TS
-				printk("input report MENU key\n");
-#endif
-				input_report_key(ts->input, KEY_MENU, 1);
-				ts->keypad = KEY_MENU;
+				printk("input report HOME key\n");
+				input_report_key(ts->input, KEY_HOME, 1);
+				ts->keypad = KEY_HOME;
 			}
-//#else
-//			if (msm_tsdebug & 1)
-//				printk("Home key : x=%d, y=%d\n", lx, ly);
-//			
-//			if (ts->keypad == 0) {
-//				printk("input report HOME key\n");
-//				input_report_key(ts->input, KEY_HOME, 1);
-//				ts->keypad = KEY_HOME;
-//			}
-//#endif 
+ 
 		} else if ((lx > back_x) && (ly > back_y)) {
 			if (msm_tsdebug & 1)
 				printk("Back key : x=%d, y=%d\n", lx, ly);
 
 			if (ts->keypad == 0) {
-#if SWIFT_DEBUG_TS
 				printk("input report BACK key\n");
-#endif
 				input_report_key(ts->input, KEY_BACK, 1);
 				ts->keypad = KEY_BACK;
 				ts_key_event = 1;
@@ -665,11 +589,7 @@ static int __devinit ts_probe(struct platform_device *pdev)
 	input_dev->absbit[BIT_WORD(ABS_MISC)] = BIT_MASK(ABS_MISC);
 	input_dev->keybit[BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH);
 
-//#if defined(CONFIG_MACH_MSM7X27_SWIFT_REV_1)
-    set_bit(KEY_MENU, input_dev->keybit); 
-//#else
     set_bit(KEY_HOME, input_dev->keybit); 
-//#endif
 	set_bit(KEY_BACK, input_dev->keybit);
 
     if (pdata) {
@@ -705,17 +625,17 @@ static int __devinit ts_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, ts);
 
-//#if defined(TS_KEY_CALMODE)
-//	res = misc_register(&touch_cal_misc_device);
-//	if (res) {
-//		printk(KERN_ERR"heaven_motion_misc_device register failed\n");
-//		goto fail_misc_device_register_failed;
-//	}  
-//
-//	printk("[SWIFT TOUCH CAL-PROBE] MenuKey X: %d, MENUKey y: %d\n", menu_x, menu_y); 
-//	printk("[SWIFT TOUCH CAL-PROBE] BACKKey X: %d, BACKKey y: %d\n", back_x, back_y); 
-//#endif
-	base_ts = ts;
+#if defined(TS_KEY_CALMODE)
+	res = misc_register(&touch_cal_misc_device);
+	if (res) {
+		printk(KERN_ERR"heaven_motion_misc_device register failed\n");
+		goto fail_misc_device_register_failed;
+	}  
+
+	printk("[SWIFT TOUCH CAL-PROBE] MenuKey X: %d, MENUKey y: %d\n", menu_x, menu_y); 
+	printk("[SWIFT TOUCH CAL-PROBE] BACKKey X: %d, BACKKey y: %d\n", back_x, back_y); 
+#endif
+
 	return 0;
 
 fail_req_irq:
@@ -748,7 +668,7 @@ static int __devexit ts_remove(struct platform_device *pdev)
 	release_mem_region(res->start, resource_size(res));
 	platform_set_drvdata(pdev, NULL);
 	kfree(ts);
-	base_ts = 0;
+
 	return 0;
 }
 
